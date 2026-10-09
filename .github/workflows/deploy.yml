@@ -1,0 +1,71 @@
+name: Deploy to GitHub Pages
+
+# 纯静态项目：无需构建，直接组装站点目录并发布。
+# 触发：push 到 main，或手动 workflow_dispatch。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 官方 Pages 部署所需权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只允许一个部署；新的 push 取消排队中的旧部署
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 校验与组装站点
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 单元测试是纯 Node 脚本（不依赖浏览器），作为部署前的质量闸门
+      - name: 运行单元测试（314 条断言）
+        run: |
+          node src/core/math-core.test.js
+          node tests/modules.test.js
+          node tests/motion.test.js
+          node tests/timeline.test.js
+
+      # 站点只需要 4 个目录：不发布 tests/ 与 .github/
+      - name: 组装站点目录
+        run: |
+          mkdir -p _site
+          cp -r index.html assets src vendor _site/
+          echo "站点内容："
+          du -sh _site
+          ls -la _site
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true   # 若仓库尚未开启 Pages，则由本步骤自动开启
+
+      - name: 上传站点制品
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: 部署到 GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布
+        id: deployment
+        uses: actions/deploy-pages@v4

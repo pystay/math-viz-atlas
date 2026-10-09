@@ -1,0 +1,84 @@
+/*!
+ * tokens.css — 设计令牌（Design Tokens）
+ * ---------------------------------------------------------------------------
+ * 全部取值来自对参考视频（手绘物理公式白板）的取色与节奏分析：
+ *   纸底 #FBF7EF / 卡片 #FFFDF8 / 墨色 #20262F / 珊瑚 #CE5848 / 钴蓝 #4A6288
+ *   淡网格 rgba(120,110,96,.10) / 缓动 ease-in-out / 圆角 12px / 轻投影
+ * 任何组件都不应写死颜色与间距，一律引用这里的令牌。
+ */
+:root {
+  /* 纸张与墨色 */
+  --paper: #FBF7EF;
+  --paper-2: #FFFDF8;
+  --paper-3: #F5EFE3;
+  --ink: #20262F;
+  --ink-soft: #4A525E;
+  --muted: #6B7280;
+  --grid: rgba(120, 110, 96, 0.10);
+  --line: rgba(120, 110, 96, 0.22);
+  --line-strong: rgba(120, 110, 96, 0.38);
+
+  /* 强调色（与视频中的珊瑚/钴蓝一致） */
+  --coral: #CE5848;
+  --coral-ink: #B8453A;
+  --coral-soft: rgba(206, 88, 72, 0.14);
+  --cobalt: #4A6288;
+  --cobalt-soft: rgba(74, 98, 136, 0.14);
+  --mint: #2F9E7E;
+  --mint-soft: rgba(47, 158, 126, 0.14);
+  --amber: #A9761F;
+  --violet: #7A5AA8;
+
+  /* 排版 */
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-math: "Cambria Math", "Latin Modern Math", Georgia, "Times New Roman", serif;
+  --font-mono: Consolas, "Courier New", ui-monospace, monospace;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-15: 15px;
+  --fs-18: 18px;
+  --fs-24: 24px;
+  --fs-34: 34px;
+
+  /* 间距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* 形状与阴影 */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgba(60, 50, 40, 0.10);
+  --shadow: 0 4px 14px rgba(60, 50, 40, 0.12);
+  --shadow-lg: 0 10px 30px rgba(60, 50, 40, 0.16);
+
+  /* 动效节奏（与视频的缓动一致） */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+
+  /* ---- 动效规范（Design Tokens for Motion）---- */
+  /* 1) 重置回退：easeInOutCubic，420ms —— 先慢、中段快、尾段缓，像"时间倒流" */
+  --motion-reset-dur: 420ms;
+  --motion-reset-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  /* 2) 曲线描边生成：650ms easeOutCubic */
+  --motion-draw-dur: 650ms;
+  /* 3) 模块切换（相机）：380ms easeInOutCubic */
+  --motion-camera-dur: 380ms;
+  /* 4) 背景活力：极慢（24s 一个循环）、极低对比度（alpha ≤ 0.05）、幅度 ≤ 6% */
+  --ambient-period: 24s;
+  --ambient-alpha: 0.05;
+  --ambient-drift: 6%;
+  --ambient-grid-pulse: 0.22;
+
+  /* 纸纹与暗角（视频中的纸张颗粒） */
+  --grain-opacity: 0.055;
+  --vignette: radial-gradient(120% 80% at 20% 8%, #FFFDF8 0%, #F8F2E7 58%, #F0E8DA 100%);
+}

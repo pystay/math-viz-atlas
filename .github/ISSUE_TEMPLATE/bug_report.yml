@@ -1,0 +1,103 @@
+name: 🐛 Bug 报告
+description: 报告一个缺陷（渲染异常、数学错误、交互问题等）
+title: "[Bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量填写完整，尤其是**能触发问题的最小输入**。
+        如果涉及安全问题，请不要在这里提交，改用 [SECURITY.md](../blob/main/SECURITY.md) 的私下渠道。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 问题描述
+      description: 发生了什么？你期望发生什么？
+      placeholder: |
+        例如：在沙盒输入 `1/x`，把探针移到 x=0 时，读数显示 "0" 而不是 "无定义"。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请写出从打开页面到问题出现的最短步骤。
+      placeholder: |
+        1. 打开在线 Demo
+        2. 进入「自由探索沙盒」
+        3. 在 f₁ 输入 `1/x`
+        4. 把探针拖到 x = 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 涉及模块
+      options:
+        - 自由探索沙盒（含微积分运算）
+        - 算术（加法 / 乘法）
+        - 代数（线性 / 二次 / 指数对数 / 不等式）
+        - 平面几何（圆 / 勾股）
+        - 立体几何（点线面投影）
+        - 三角（单位圆）
+        - 向量（平行四边形法则）
+        - 圆锥曲线
+        - 数列（等差 / 等比 / 调和）
+        - 统计（直方图）
+        - 微积分（导数 / 定积分）
+        - 自动演示播放器
+        - 动效与背景活力层
+        - 界面 / 布局 / 无障碍
+        - 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 问题类型
+      options:
+        - 数学结果错误（计算结果/公式/读数不对）
+        - 渲染错误（曲线断裂、图形错位、文字重叠）
+        - 交互问题（点不动、拖不了、键盘无效）
+        - 性能问题（卡顿、掉帧）
+        - 报错/白屏
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: expression
+    attributes:
+      label: 触发的表达式或参数
+      description: 如果与自由输入或参数有关，请直接把内容贴在这里。
+      placeholder: "例如：f(x) = sin(x)/x，a = 0，b = 1"
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 截图 / 录屏 / 控制台输出
+      description: 拖拽图片到这里即可上传；如有报错请附上浏览器控制台内容。
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: 浏览器与系统
+      placeholder: "例如：Chrome 141 / Windows 11 / 1920×1080"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已搜索过现有 issue，确认这不是重复报告
+          required: true
+        - label: 我使用的是最新版本（在线 Demo 或 main 分支）
+          required: false

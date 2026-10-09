@@ -1,0 +1,33 @@
+version: 2
+updates:
+  # 唯一的运行时依赖是 KaTeX（已内联进 vendor/，此处用于跟踪更新提醒）
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  # 保持 Actions 版本（checkout / configure-pages / upload-pages-artifact / deploy-pages）为最新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]

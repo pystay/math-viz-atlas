@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="从算术到微积分的交互式数学可视化：手绘风格知识地图 + 实时参数化图形。">
+<title>数学可视化图谱 · Math Atlas</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<a class="skip-link" href="#stage">跳到主舞台</a>
+
+<header class="topbar">
+  <div class="brand">
+    <h1 data-i18n="app.title">数学可视化图谱</h1>
+    <span class="sub" data-i18n="app.subtitle">Math Atlas · 算术 → 微积分</span>
+  </div>
+  <div class="spacer"></div>
+  <span class="meter" id="fps" aria-live="off">-- FPS</span>
+  <button type="button" id="motion-toggle" class="meter-btn" aria-pressed="true" data-i18n="motion.on">动效：开</button>
+  <div class="lang-switch" role="group" aria-label="语言 / Language">
+    <button type="button" id="lang-zh" aria-pressed="true">中文</button>
+    <button type="button" id="lang-en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="map" id="map" aria-label="知识地图"></nav>
+
+  <main class="stage" id="stage" tabindex="-1">
+    <canvas id="plot" role="img" aria-label="数学图形画布"></canvas>
+    <div class="stage-head">
+      <span class="stage-title" id="stage-title">—</span>
+      <div class="spacer"></div>
+      <div class="readouts" id="readouts"></div>
+    </div>
+    <div class="formula-dock">
+      <span id="formula" aria-live="polite"></span>
+      <span class="caption" id="formula-caption"></span>
+    </div>
+
+    <!-- 自动演示播放器：① 引入 → ② 定义 → ③ 动态推导 → ④ 结论 → ⑤ 暂停交还用户 -->
+    <div class="demo-bar" id="demo-bar" hidden>
+      <button type="button" id="demo-toggle" class="demo-btn" aria-label="播放/暂停">▶</button>
+      <span class="demo-label" id="demo-label" aria-live="polite">—</span>
+      <input type="range" id="demo-progress" class="demo-progress" min="0" max="1000" value="0"
+             aria-label="演示进度" step="1">
+      <span class="demo-time" id="demo-time">0.0 / 0.0s</span>
+      <div class="seg demo-speed" role="group" aria-label="倍速">
+        <button type="button" data-speed="0.5">0.5×</button>
+        <button type="button" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" data-speed="2">2×</button>
+      </div>
+      <button type="button" id="demo-close" class="demo-btn" aria-label="关闭演示">✕</button>
+    </div>
+  </main>
+
+  <aside class="panel" aria-label="参数与说明">
+    <section class="card">
+      <h2 data-i18n="panel.controls">参数控制</h2>
+      <div id="controls"></div>
+    </section>
+    <section class="card">
+      <h2 data-i18n="panel.info">概念闭环</h2>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="tabpanel" id="tabpanel" role="tabpanel"></div>
+    </section>
+    <section class="card">
+      <h2 data-i18n="panel.legend">图例</h2>
+      <div class="legend" id="legend"></div>
+      <p class="hint" id="hint"></p>
+    </section>
+  </aside>
+</div>
+
+<pre id="boot-error" role="alert"></pre>
+<noscript><p style="padding:24px">本应用需要启用 JavaScript。</p></noscript>
+
+<script>
+  // 模块注册表：各模块文件只负责“登记自己”，互不依赖。
+  window.MS = {
+    modules: [],
+    register: function (m) { this.modules.push(m); return m; },
+    byId: function (id) { for (var i = 0; i < this.modules.length; i++) if (this.modules[i].id === id) return this.modules[i]; return null; }
+  };
+  window.onerror = function (msg, src, line, col) {
+    var el = document.getElementById('boot-error');
+    if (el) { el.style.display = 'block'; el.textContent = '加载失败：' + msg + '\n' + src + ':' + line + ':' + col; }
+  };
+</script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="src/core/math-core.js"></script>
+<script src="src/render/sketch.js"></script>
+<script src="src/render/motion.js"></script>
+<script src="src/render/timeline.js"></script>
+<script src="src/render/plot.js"></script>
+<script src="src/ui/i18n.js"></script>
+<script src="src/modules/sandbox.js"></script>
+<script src="src/modules/arithmetic.js"></script>
+<script src="src/modules/algebra.js"></script>
+<script src="src/modules/algebra2.js"></script>
+<script src="src/modules/geometry.js"></script>
+<script src="src/modules/geometry2.js"></script>
+<script src="src/modules/trig.js"></script>
+<script src="src/modules/trig2.js"></script>
+<script src="src/modules/calculus.js"></script>
+<script src="src/modules/series.js"></script>
+<script src="src/modules/stats.js"></script>
+<script src="src/modules/demos.js"></script>
+<script src="src/ui/app.js"></script>
+</body>
+</html>

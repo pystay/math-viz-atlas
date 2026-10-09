@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software or its visualizations in academic work, please cite it as below."
+title: "Math Viz Atlas · 数学可视化图谱"
+abstract: >-
+  An interactive mathematical visualization atlas built with DeepSeek Harness.
+  It covers primary-school arithmetic through university-level single-variable
+  calculus with 19 interactive modules, a free-form expression sandbox with a
+  live calculus engine (symbolic differentiation, antiderivatives, definite
+  integrals, numerical limits and constant perturbation), a narrative auto-play
+  demo system, and a zero-build, zero-CDN static architecture.
+authors:
+  - family-names: "pystay"
+    alias: "pystay"
+    website: "https://github.com/pystay"
+version: 0.1.0
+date-released: "2026-10-09"
+license: MIT
+repository-code: "https://github.com/pystay/math-viz-atlas"
+url: "https://pystay.github.io/math-viz-atlas/"
+keywords:
+  - mathematics
+  - math
+  - visualization
+  - education
+  - expression-parser
+  - calculus
+  - canvas
+  - interactive
+  - k-12
+  - deepseek-harness

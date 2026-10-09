@@ -147,3 +147,28 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# ---------------------------------------------------------------------------
+# Math Viz Atlas（项目特定）
+# ---------------------------------------------------------------------------
+
+# 探针脚本产出的临时截图与中间切片（正式素材只保留 docs/media/）
+shots/
+*.tmp.png
+crops/
+vframes/
+
+# 独立验证过程中产生的快照副本与文本输出（体量大且与 src 重复）
+tests/verify2/snapshot_rev2/
+tests/verify*/**/*.out.txt
+
+# 无头浏览器探针的临时用户数据目录
+.dsh-chrome-profile/
+
+# 编辑器与系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+
