@@ -26,10 +26,6 @@
 
 更多实拍见 [docs/media/](docs/media/)。
 
-## 在线 Demo
-
-**<https://pystay.github.io/math-viz-atlas/>**
-
 打开即用，无需登录、无需安装。也可以克隆到本地后**直接双击 `index.html`**（`file://` 亦可运行）。
 
 ## 功能
