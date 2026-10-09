@@ -1,0 +1,43 @@
+name: CI · 单元测试
+
+# 本项目使用 GitHub Pages 的「Deploy from a branch」（main / 根目录）发布，
+# 因此这里只做质量校验，不执行部署（部署由 Pages 服务在推送后自动完成）。
+#
+# 说明：
+# - 4 个套件都是纯 Node 脚本，不依赖浏览器，可在 CI 中稳定运行。
+# - 浏览器端到端探针（tests/*-probe.mjs）硬编码了 Windows 下的 Chrome 路径，
+#   只适合本地运行，故不纳入 CI。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: 单元测试（314 条断言）
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v7
+
+      - name: 安装 Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - name: 核心层（76 条）
+        run: node src/core/math-core.test.js
+
+      - name: 模块层（182 条：19 个模块 + 沙盒微积分 + 演示脚本）
+        run: node tests/modules.test.js
+
+      - name: 动效引擎（29 条）
+        run: node tests/motion.test.js
+
+      - name: 演示时间轴（27 条）
+        run: node tests/timeline.test.js

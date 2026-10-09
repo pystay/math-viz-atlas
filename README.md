@@ -5,7 +5,7 @@
 
 [![在线 Demo](https://img.shields.io/badge/Demo-Online-2F9E7E?style=flat-square)](https://pystay.github.io/math-viz-atlas/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4A6288?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-314%20assertions%20passing-2F9E7E?style=flat-square)](#五验收结果全部可复现)
+[![CI](https://github.com/pystay/math-viz-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/pystay/math-viz-atlas/actions/workflows/ci.yml)
 [![Runtime deps](https://img.shields.io/badge/runtime%20deps-0%20(all%20bundled)-CE5848?style=flat-square)](#技术栈)
 [![Build](https://img.shields.io/badge/build-none%20required-7A5AA8?style=flat-square)](#构建)
 
@@ -54,7 +54,7 @@
 | 公式排版 | **KaTeX**（内联于 `vendor/`） | 无 CDN 请求 |
 | 动效 | 自研补间管理器 + 时间轴引擎 | 无 GSAP / Framer Motion 等动画框架 |
 | 测试与验收 | Node 断言 + **Chrome DevTools Protocol** 探针 | 314 条单元断言 + 帧率/墨迹/布局/沙盒/动效/演示端到端实测 |
-| CI / 部署 | **GitHub Actions → GitHub Pages** | 部署前跑单元测试作为质量闸门 |
+| CI / 部署 | **GitHub Actions（CI）+ GitHub Pages（分支部署）** | push / PR 跑单元测试；Pages 从 `main` 根目录发布（配 `.nojekyll`） |
 
 **运行时依赖：0 个**（KaTeX 已内联）。唯一的外部 npm 依赖是构建期的 KaTeX，仅用于将来重新内联。
 
@@ -101,20 +101,36 @@ node tests/layout-probe.mjs 390 844 sandbox   # 窄屏布局
 
 ## 部署
 
-推送到 `main` 即自动部署（见 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)）：
+本项目使用 GitHub Pages 的 **Deploy from a branch** 模式：`main` 分支的根目录就是站点根目录。
 
-1. `actions/checkout` 拉取代码 → `actions/setup-node` 准备 Node 20
-2. **运行单元测试**（314 条断言）作为质量闸门，测试失败则不部署
-3. 组装站点目录（只发布 `index.html` / `assets/` / `src/` / `vendor/`，不发布 `tests/` 与 `.github/`）
-4. `actions/configure-pages` → `actions/upload-pages-artifact` → `actions/deploy-pages`
+**首次启用（一次性点击）**：
 
-权限遵循官方最小集：`contents: read`、`pages: write`、`id-token: write`。
+`Settings → Pages → Build and deployment → Source = Deploy from a branch`
+→ Branch 选 **`main`**、目录选 **`/ (root)`** → **Save**。
+约 1 分钟后 <https://pystay.github.io/math-viz-atlas/> 即可访问。
 
-**首次需要在仓库设置里做一次选择**：`Settings → Pages → Build and deployment → Source = GitHub Actions`。
-（workflow 里的 `configure-pages` 带 `enablement: true`，多数情况下会自动开启。）
+**为什么必须有 `.nojekyll`**：分支部署默认会用 Jekyll 处理站点，而 Jekyll 的默认排除列表里包含 `vendor/`，
+会把内联的 KaTeX（`vendor/katex/`，81 个文件）从产物中丢掉，导致**公式渲染全部 404**。
+仓库根目录的空文件 `.nojekyll` 让 Pages 原样发布文件——这不是可选项，是必需的。
 
-更新与重新部署：本地改完后 `git add . && git commit -m "..." && git push origin main`，
-Actions 会自动重跑，约 1 分钟后线上生效。
+**日常更新与重新部署**：
+
+```bash
+git add .
+git commit -m "fix: ..."
+git push origin main
+```
+
+推送后 Pages 会自动重建，约 1 分钟线上生效。**无需任何额外命令或构建步骤。**
+
+**质量闸门**：[`.github/workflows/ci.yml`](.github/workflows/ci.yml) 在 push / PR 时运行 4 个单元测试套件
+（314 条断言）。它**只做校验、不参与部署**——浏览器端到端探针（`tests/*-probe.mjs`）硬编码了 Windows 下的
+Chrome 路径，只适合本地运行，故不纳入 CI。
+
+**可选：改用 GitHub Actions 部署**（好处是只发布 `index.html`/`assets`/`src`/`vendor`，不暴露 `tests/` 与 `.github/`）：
+把 Source 改成 `GitHub Actions`，并恢复一个使用 `actions/configure-pages` + `actions/upload-pages-artifact` +
+`actions/deploy-pages` 的 workflow。注意：`GITHUB_TOKEN` **无法为新仓库创建 Pages 站点**（会报
+`Resource not accessible by integration`），所以即使走 Actions 路线，首次也要手动在 Settings 里开启一次。
 
 ## 目录结构
 
@@ -140,7 +156,8 @@ math-viz-atlas/
 ├─ vendor/katex/               # 内联的 KaTeX（含字体），无 CDN
 ├─ tests/                      # 单元测试 + CDP 端到端探针 + 独立验证脚本与报告
 ├─ docs/media/                 # 演示录屏与截图（README 引用）
-├─ .github/                    # Pages 部署 workflow / Dependabot / issue 与 PR 模板
+├─ .github/                    # CI workflow（单元测试）/ Dependabot / issue 与 PR 模板
+├─ .nojekyll                   # 让 Pages 原样发布（否则 Jekyll 会丢掉 vendor/katex）
 ├─ CHANGELOG.md  CITATION.cff  CONTRIBUTING.md  SECURITY.md  CODE_OF_CONDUCT.md
 └─ LICENSE                     # MIT
 ```
