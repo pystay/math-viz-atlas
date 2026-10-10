@@ -69,7 +69,7 @@
   function nodePos(plot, i) {
     var cx = plot.size.w / 2, cy = plot.size.h / 2;
     var isSubj = i >= N;
-    var R = Math.min(plot.size.w, plot.size.h) * (isSubj ? 0.52 : 0.28);
+    var R = Math.min(plot.size.w, plot.size.h) * (isSubj ? 0.46 : 0.28);
     var a = NODES[i].angle * Math.PI / 180;
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
   }
@@ -182,30 +182,31 @@
     draw: function (plot, p, state) {
       var ctx = plot.ctx, i;
       var cx = plot.size.w / 2, cy = plot.size.h / 2;
-      // 标签描边：先描纸色底再填色，任何背景下都清晰（视觉修复，不影响命中逻辑）
-      var _fillText = ctx.fillText.bind(ctx);
-      ctx.fillText = function (text, x, y, maxW) {
-        var _lw = ctx.lineWidth;
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#FBF7EF';
-        ctx.strokeText(text, x, y, maxW);
-        ctx.lineWidth = _lw;
-        _fillText(text, x, y, maxW);
-      };
 
-      // ---- 放射连线（数学圈 0.30 + 多学科圈 0.44，全部从中心发出）----
+      // 标签统一风格：纸色描边 + 填充色（局部 save/restore，不污染后续绘制）
+      function outlineText(text, x, y, fillColor, strokeW) {
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = strokeW || 3;
+        ctx.strokeStyle = '#FBF7EF';
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = fillColor;
+        ctx.fillText(text, x, y);
+        ctx.restore();
+      }
+
+      // ---- 放射连线（数学圈 0.28 + 多学科圈 0.46）----
       if (p.showLines) {
         ctx.save();
         ctx.lineWidth = 1;
-        ctx.setLineDash([3, 5]);
-        // 数学圈：较实
         ctx.strokeStyle = P.ink;
+        ctx.setLineDash([3, 5]);
         ctx.globalAlpha = 0.30;
         for (i = 0; i < N; i++) {
           var np = nodePos(plot, i);
           ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(np.x, np.y); ctx.stroke();
         }
-        // 多学科外圈：更淡（规划中）
         ctx.globalAlpha = 0.12;
         ctx.setLineDash([2, 6]);
         for (i = N; i < NALL; i++) {
@@ -215,72 +216,55 @@
         ctx.restore();
       }
 
-      // ---- 多学科外圈（先画，垫在底层；半径 0.44，整体更淡表示"规划中"）----
+      // ---- 多学科外圈（先画垫底；实心小圆 + 白字标签在圆内，说明放圆外下方）----
       for (i = N; i < NALL; i++) {
         var snode = NODES[i];
         var spos = nodePos(plot, i);
         var shovered = (state.hover === i);
+        var sr = shovered ? 30 : 26;
         ctx.beginPath();
-        ctx.arc(spos.x, spos.y, shovered ? 38 : 32, 0, Math.PI * 2);
+        ctx.arc(spos.x, spos.y, sr, 0, Math.PI * 2);
         ctx.fillStyle = snode.color;
-        ctx.globalAlpha = shovered ? 0.95 : 0.55;
+        ctx.globalAlpha = shovered ? 1 : 0.9;
         ctx.fill();
         ctx.globalAlpha = 1;
         if (shovered) { ctx.lineWidth = 2; ctx.strokeStyle = P.ink; ctx.stroke(); }
-        // 半透明圆内白字不可读：标签沿半径向外推 38px，落在两圈之间的空白处
-        var _la = snode.angle * Math.PI / 180;
-        var _lx = spos.x + 38 * Math.cos(_la);
-        var _ly = spos.y + 38 * Math.sin(_la) + 4;
-        ctx.textAlign = 'center';
-        ctx.font = '700 11px Consolas, monospace';
-        ctx.fillStyle = P.ink;
-        ctx.globalAlpha = 0.92;
-        ctx.fillText(pick(snode.label), _lx, _ly);
+        ctx.font = '700 9px Consolas, monospace';
+        outlineText(pick(snode.label), spos.x, spos.y + 1, '#fff', 2.5);
         if (p.showSub) {
           ctx.font = '9px Consolas, monospace';
-          ctx.fillStyle = P.ink;
-          ctx.globalAlpha = 0.5;
           var ss = pick(snode.sub);
-          if (ss.length > 13) ss = ss.slice(0, 12) + '…';
-          ctx.fillText(ss, _lx, _ly + 12);
+          if (ss.length > 10) ss = ss.slice(0, 9) + '…';
+          outlineText(ss, spos.x, spos.y + sr + 11, P.ink, 3);
         }
-        ctx.globalAlpha = 1;
       }
 
-      // ---- 数学核心圈节点（半径 0.30，实心）----
+      // ---- 数学核心圈节点（实心大圆 + 白字；标签压在圆边缘内侧，说明放圆外）----
       for (i = 0; i < N; i++) {
         var node = NODES[i];
         var pos = nodePos(plot, i);
         var hovered = (state.hover === i);
-        var r = hovered ? 50 : 42;
+        var r = hovered ? 48 : 42;
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
         ctx.fillStyle = node.color;
-        ctx.globalAlpha = hovered ? 1 : 0.92;
+        ctx.globalAlpha = hovered ? 1 : 0.94;
         ctx.fill();
         ctx.globalAlpha = 1;
-        if (hovered) {
-          ctx.lineWidth = 2.5;
-          ctx.strokeStyle = P.ink;
-          ctx.stroke();
-        }
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.font = '700 13px Consolas, monospace';
-        ctx.fillText(pick(node.label), pos.x, pos.y + 1);
+        if (hovered) { ctx.lineWidth = 2.5; ctx.strokeStyle = P.ink; ctx.stroke(); }
+        // 标签压在圆内上缘（白字）；说明放圆外下方（墨色）—— 两行文字永不相撞
+        ctx.font = '700 12px Consolas, monospace';
+        outlineText(pick(node.label), pos.x, pos.y + 1, '#fff', 3);
         if (p.showSub) {
-          ctx.font = '11px Consolas, monospace';
-          ctx.globalAlpha = 0.85;
+          ctx.font = '10px Consolas, monospace';
           var sub = pick(node.sub);
-          if (sub.length > 16) sub = sub.slice(0, 15) + '…';
-          ctx.fillText(sub, pos.x, pos.y + 16);
-          ctx.globalAlpha = 1;
+          if (sub.length > 12) sub = sub.slice(0, 11) + '…';
+          outlineText(sub, pos.x, pos.y + r + 13, P.ink, 3);
         }
       }
 
-      // ---- 中心：自由探索沙盒（三层同心圆，呼应"自由输入-实时解析-动态渲染"）----
+      // ---- 中心：自由探索沙盒 ----
       ctx.save();
-      // 外环（虚线，暗示可继续扩展）
       ctx.beginPath();
       ctx.arc(cx, cy, 84, 0, Math.PI * 2);
       ctx.strokeStyle = P.coral;
@@ -288,41 +272,21 @@
       ctx.lineWidth = 1.4;
       ctx.stroke();
       ctx.setLineDash([]);
-      // 主圆
       ctx.beginPath();
       ctx.arc(cx, cy, 64, 0, Math.PI * 2);
       ctx.fillStyle = P.coral;
       ctx.globalAlpha = state.hover === -1 ? 1 : 0.94;
       ctx.fill();
       ctx.globalAlpha = 1;
-      if (state.hover === -1) {
-        ctx.lineWidth = 2.5; ctx.strokeStyle = P.ink; ctx.stroke();
-      }
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
+      if (state.hover === -1) { ctx.lineWidth = 2.5; ctx.strokeStyle = P.ink; ctx.stroke(); }
       ctx.font = '700 15px Consolas, monospace';
-      ctx.fillText('自由探索沙盒', cx, cy - 10);
+      outlineText('自由探索沙盒', cx, cy - 10, '#fff', 3);
       ctx.font = '11px Consolas, monospace';
-      ctx.globalAlpha = 0.95;
-      ctx.fillText('<100ms 输入→渲染', cx, cy + 8);
-      ctx.fillText('+ 微积分引擎', cx, cy + 24);
-      ctx.globalAlpha = 1;
+      outlineText('<100ms 输入→渲染', cx, cy + 8, '#fff', 2.5);
+      outlineText('+ 微积分引擎', cx, cy + 24, '#fff', 2.5);
       ctx.restore();
 
-      // ---- 画布内标题（左上，低调）----
-      ctx.save();
-      ctx.textAlign = 'left';
-      ctx.fillStyle = P.ink;
-      ctx.font = '700 22px Consolas, monospace';
-      ctx.globalAlpha = 0.9;
-      ctx.fillText('Math Viz Atlas', 24, 34);
-      ctx.font = '12px Consolas, monospace';
-      ctx.globalAlpha = 0.55;
-      ctx.fillText('零构建 · 零 CDN · 双击 index.html 即跑 · 19 个模块 + 沙盒微积分 + 自动演示', 24, 54);
-      ctx.globalAlpha = 1;
-      ctx.restore();
-
-      // ---- 画布内脚注（底部一行）----
+      // ---- 画布内脚注（底部一行，低调）----
       ctx.save();
       ctx.textAlign = 'right';
       ctx.fillStyle = P.ink;
