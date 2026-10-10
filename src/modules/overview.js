@@ -20,8 +20,8 @@
   var MS = root.MS, P = root.Plot.PALETTE, MC = root.MathCore;
   function pick(o) { return root.I18N.pick(o); }
 
-  // 8 个学段节点：target 必须真实存在（已核对 19 个模块的 id）
-  var NODES = [
+  // 8 个学段节点（数学核心圈）：target 指向真实模块
+  var MATH_NODES = [
     { target: 'arith-add',         label: { zh: '小学·算术', en: 'Arithmetic' },
       sub: { zh: '加法（集合并）· 乘法（矩阵阵列）', en: 'Sets union · Array product' },
       color: P.cobalt, angle: -130 },
@@ -31,7 +31,7 @@
     { target: 'geo-pythagoras',    label: { zh: '平面几何', en: 'Geometry' },
       sub: { zh: '勾股定理 · 正多边形逼近圆', en: 'Pythagoras · Polygons → circle' },
       color: P.violet, angle: -55 },
-    { target: 'solid-3d',         label: { zh: '立体几何', en: 'Solid 3D' },
+    { target: 'solid-3d',          label: { zh: '立体几何', en: 'Solid 3D' },
       sub: { zh: '正方体 / 正四面体 / 正八面体', en: 'Cube · Tetra · Octa' },
       color: P.coral, angle: -15 },
     { target: 'trig-unit',         label: { zh: '三角·向量', en: 'Trig · Vectors' },
@@ -47,20 +47,36 @@
       sub: { zh: '导数 · 定积分（黎曼和）', en: 'Derivative · Definite integral' },
       color: P.coral, angle: 95 }
   ];
-  var N = NODES.length;
+  // 多学科扩展圈（规划中）：K-12 语文/英语/科学 + 物理/化学/生物 + 计算机/历史/地理/道法
+  var SUBJ_NODES = [
+    { target: null, label: { zh: '语文', en: 'Language' },  sub: { zh: '汉字 · 笔画 · 古诗意境', en: 'Hanzi · Strokes · Poetry' }, color: P.violet, angle: -150 },
+    { target: null, label: { zh: '英语', en: 'English' },  sub: { zh: '发音 · 场景对话 · 词汇', en: 'Phonics · Dialogues' }, color: P.cobalt, angle: -125 },
+    { target: null, label: { zh: '科学', en: 'Science' },  sub: { zh: '植物生长 · 物质变化', en: 'Growth · Change' }, color: P.mint, angle: -100 },
+    { target: null, label: { zh: '物理', en: 'Physics' },  sub: { zh: '声 · 光 · 热 · 力', en: 'Sound · Light · Heat · Force' }, color: P.coral, angle: 120 },
+    { target: null, label: { zh: '化学', en: 'Chemistry' }, sub: { zh: '分子结构 · 反应 · 周期', en: 'Molecules · Reactions' }, color: P.violet, angle: 145 },
+    { target: null, label: { zh: '生物', en: 'Biology' },  sub: { zh: '细胞 · 代谢 · 进化', en: 'Cells · Metabolism' }, color: P.mint, angle: 170 },
+    { target: null, label: { zh: '计算机', en: 'CS' },     sub: { zh: '数据结构 · 算法 · 状态机', en: 'Algorithms · State machines' }, color: P.cobalt, angle: 195 },
+    { target: null, label: { zh: '历史', en: 'History' },  sub: { zh: '时间轴 · 中外脉络', en: 'Timeline' }, color: P.ink, angle: 215 },
+    { target: null, label: { zh: '地理', en: 'Geography' }, sub: { zh: '地球运动 · 板块 · 地图', en: 'Earth · Plates · Maps' }, color: P.coral, angle: 240 },
+    { target: null, label: { zh: '道德与法治', en: 'Civics' }, sub: { zh: '案例 · 社会认知', en: 'Cases · Society' }, color: P.ink, angle: 265 }
+  ];
+  var NODES = MATH_NODES.concat(SUBJ_NODES);   // 兼容旧引用：前 8 = 数学，后 10 = 多学科
+  var N = MATH_NODES.length;                     // 数学节点数（tour / 键盘 / 图例都用它）
+  var NALL = NODES.length;                       // 全部节点（命中检测用）
   var HUB = 'sandbox';
 
-  // 节点在画布像素中的位置（不依赖 plot.sx 世界坐标，这是"屏幕图"）
+  // 节点位置：数学核心圈半径 0.30，多学科外圈 0.44
   function nodePos(plot, i) {
     var cx = plot.size.w / 2, cy = plot.size.h / 2;
-    var R = Math.min(plot.size.w, plot.size.h) * 0.34;
+    var isSubj = i >= N;
+    var R = Math.min(plot.size.w, plot.size.h) * (isSubj ? 0.52 : 0.28);
     var a = NODES[i].angle * Math.PI / 180;
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
   }
   function hitIndex(plot, mx, my) {
     var cx = plot.size.w / 2, cy = plot.size.h / 2;
     if (Math.abs(mx - cx) < 78 && Math.abs(my - cy) < 78) return -1; // 中心
-    for (var i = 0; i < N; i++) {
+    for (var i = 0; i < NALL; i++) {
       var p = nodePos(plot, i), dx = mx - p.x, dy = my - p.y;
       if (dx * dx + dy * dy < 56 * 56) return i;
     }
@@ -103,13 +119,13 @@
       return out;
     },
     init: function (state) {
-      state.hover = -2;    // -2 = 无；-1 = 中心；0..7 = 节点
+      state.hover = -2;    // -2 = 无；-1 = 中心；0..7 = 数学节点；8..17 = 多学科节点
       state.t = 0;
     },
     animate: function (state, p, dt) {
       if (!p.tour) return false;
       state.t += dt / 1000;
-      // 每 2.4s 移到下一个节点（含中心），周而复始
+      // 自动巡游只在数学核心圈（含中心）之间推进，避免把"规划中"的多学科节点当成已实现
       var next = Math.floor(state.t / 2.4) % (N + 1) - 1;
       if (next !== state.hover) { state.hover = next; return true; }
       return false;
@@ -129,15 +145,21 @@
         var t = String(p.jump || '').trim();
         if (t) { MS.gotoModule(MS.byId(t) ? t : HUB); }
         else { MS.gotoModule(HUB); }
-      } else if (hit >= 0) {
-        MS.gotoModule(NODES[hit].target);
+        return;
+      }
+      if (hit >= 0) {
+        var node = NODES[hit];
+        if (node.target) MS.gotoModule(node.target);
+        else MS.gotoModule(HUB);   // 多学科节点（规划中）：回落沙盒，不崩
+        return;
       }
     },
     onKey: function (state, p, key, step, shift) {
-      // 焦点顺序：-2(无) → -1(中心) → 0 → … → 7；左右循环
+      // 焦点顺序：-2(无) → -1(中心) → 0..7(数学) → 8..17(多学科)；左右循环
+      var total = NALL + 1;  // 中心 + 全部节点
       function fwd() {
         if (state.hover === -2) state.hover = -1;
-        else if (state.hover < 7) state.hover = state.hover + 1;
+        else if (state.hover < NALL - 1) state.hover = state.hover + 1;
       }
       function back() {
         if (state.hover === -2) state.hover = -1;
@@ -150,7 +172,8 @@
           var t = String(p.jump || '').trim();
           MS.gotoModule((t && MS.byId(t)) ? t : HUB);
         } else {
-          MS.gotoModule(NODES[state.hover].target);
+          var nd = NODES[state.hover];
+          MS.gotoModule(nd.target ? nd.target : HUB);
         }
         return true;
       }
@@ -159,27 +182,77 @@
     draw: function (plot, p, state) {
       var ctx = plot.ctx, i;
       var cx = plot.size.w / 2, cy = plot.size.h / 2;
+      // 标签描边：先描纸色底再填色，任何背景下都清晰（视觉修复，不影响命中逻辑）
+      var _fillText = ctx.fillText.bind(ctx);
+      ctx.fillText = function (text, x, y, maxW) {
+        var _lw = ctx.lineWidth;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#FBF7EF';
+        ctx.strokeText(text, x, y, maxW);
+        ctx.lineWidth = _lw;
+        _fillText(text, x, y, maxW);
+      };
 
-      // ---- 放射连线（虚线，低调）----
+      // ---- 放射连线（数学圈 0.30 + 多学科圈 0.44，全部从中心发出）----
       if (p.showLines) {
         ctx.save();
-        ctx.strokeStyle = P.ink;
-        ctx.globalAlpha = 0.28;
         ctx.lineWidth = 1;
         ctx.setLineDash([3, 5]);
+        // 数学圈：较实
+        ctx.strokeStyle = P.ink;
+        ctx.globalAlpha = 0.30;
         for (i = 0; i < N; i++) {
           var np = nodePos(plot, i);
           ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(np.x, np.y); ctx.stroke();
         }
+        // 多学科外圈：更淡（规划中）
+        ctx.globalAlpha = 0.12;
+        ctx.setLineDash([2, 6]);
+        for (i = N; i < NALL; i++) {
+          var sp = nodePos(plot, i);
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sp.x, sp.y); ctx.stroke();
+        }
         ctx.restore();
       }
 
-      // ---- 节点（圆 + 学段名 + 说明）----
+      // ---- 多学科外圈（先画，垫在底层；半径 0.44，整体更淡表示"规划中"）----
+      for (i = N; i < NALL; i++) {
+        var snode = NODES[i];
+        var spos = nodePos(plot, i);
+        var shovered = (state.hover === i);
+        ctx.beginPath();
+        ctx.arc(spos.x, spos.y, shovered ? 38 : 32, 0, Math.PI * 2);
+        ctx.fillStyle = snode.color;
+        ctx.globalAlpha = shovered ? 0.95 : 0.55;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        if (shovered) { ctx.lineWidth = 2; ctx.strokeStyle = P.ink; ctx.stroke(); }
+        // 半透明圆内白字不可读：标签沿半径向外推 38px，落在两圈之间的空白处
+        var _la = snode.angle * Math.PI / 180;
+        var _lx = spos.x + 38 * Math.cos(_la);
+        var _ly = spos.y + 38 * Math.sin(_la) + 4;
+        ctx.textAlign = 'center';
+        ctx.font = '700 11px Consolas, monospace';
+        ctx.fillStyle = P.ink;
+        ctx.globalAlpha = 0.92;
+        ctx.fillText(pick(snode.label), _lx, _ly);
+        if (p.showSub) {
+          ctx.font = '9px Consolas, monospace';
+          ctx.fillStyle = P.ink;
+          ctx.globalAlpha = 0.5;
+          var ss = pick(snode.sub);
+          if (ss.length > 13) ss = ss.slice(0, 12) + '…';
+          ctx.fillText(ss, _lx, _ly + 12);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // ---- 数学核心圈节点（半径 0.30，实心）----
       for (i = 0; i < N; i++) {
         var node = NODES[i];
         var pos = nodePos(plot, i);
         var hovered = (state.hover === i);
-        var r = hovered ? 52 : 44;
+        var r = hovered ? 50 : 42;
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
         ctx.fillStyle = node.color;
@@ -193,7 +266,7 @@
         }
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
-        ctx.font = '700 14px Consolas, monospace';
+        ctx.font = '700 13px Consolas, monospace';
         ctx.fillText(pick(node.label), pos.x, pos.y + 1);
         if (p.showSub) {
           ctx.font = '11px Consolas, monospace';
