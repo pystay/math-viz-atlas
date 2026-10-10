@@ -14,7 +14,7 @@
   var MS = root.MS, MC = root.MathCore, I18N = root.I18N, P = root.Plot.PALETTE;
 
   var STAGE_ORDER = [
-    'sandbox', 'arith', 'algebra', 'geometry', 'solid3d', 'trig',
+    'overview', 'sandbox', 'arith', 'algebra', 'geometry', 'solid3d', 'trig',
     'vector', 'analytic', 'series', 'stats', 'calculus'
   ];
   var INFO_TABS = ['definition', 'geometry', 'algebra', 'application'];
@@ -939,6 +939,7 @@
     canvas.addEventListener('pointerdown', function (ev) {
       try { canvas.focus({ preventScroll: true }); } catch (e) { canvas.focus(); }
       if (current && typeof current.onPointer === 'function' && current.onPointer(state, params, worldAt(ev), ev)) dirty = true;
+      if (current && typeof current.onClick === 'function') current.onClick(state, params, worldAt(ev), ev);
     });
     canvas.addEventListener('wheel', function (ev) {
       if (!current || !current.zoomable) return;
